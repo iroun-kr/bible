@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="개역한글 성경 66권을 책·장별로 골라 소리 내어 들을 수 있습니다.">
+<meta name="theme-color" content="#F5F6F2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#111619" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="성경 듣기">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>개역한글 성경 듣기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap">
+<style>
+*,*::before,*::after{box-sizing:border-box}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0;-webkit-text-size-adjust:100%}
+img{max-width:100%}
+[hidden]{display:none!important}
+/* Layout: one quiet reading column like a printed Bible page; header for 책·장, a fixed player bar at the bottom. */
+:root{
+  --bg:#F5F6F2; --surface:#FFFFFF; --ink:#1D262C; --muted:#5E6A70; --line:#DCE1DD;
+  --accent:#1F5E74; --accent-ink:#FFFFFF; --mark:#FBEFC2; --soft:#E8EEEC;
+  --f-text:"Gowun Batang","Nanum Myeongjo","AppleMyungjo","Batang",serif;
+  --f-ui:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  --verse-size:20px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#111619; --surface:#1A2126; --ink:#E6EAE7; --muted:#98A4A9; --line:#2A3338;
+  --accent:#7FC1D6; --accent-ink:#0D1A1F; --mark:#3A3420; --soft:#222B30; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#111619; --surface:#1A2126; --ink:#E6EAE7; --muted:#98A4A9; --line:#2A3338;
+  --accent:#7FC1D6; --accent-ink:#0D1A1F; --mark:#3A3420; --soft:#222B30; color-scheme:dark}
+
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-ui);font-size:16px}
+button{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:6px}
+.gutter{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+.bar{max-width:720px;margin:0 auto;display:flex;align-items:center;gap:8px;padding-block:10px}
+.brand{font-size:12px;letter-spacing:.08em;color:var(--muted);white-space:nowrap}
+.ref{flex:1;min-width:0;display:flex;justify-content:center}
+.ref button{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:8px 16px;font-weight:600;font-size:17px;display:flex;align-items:center;gap:6px;cursor:pointer;max-width:100%}
+.ref button span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ref svg{flex:none}
+.sizes{display:flex;gap:4px}
+.icon-btn{border:1px solid var(--line);background:var(--surface);border-radius:10px;min-width:40px;height:40px;display:grid;place-items:center;cursor:pointer;font-weight:600}
+.icon-btn:active{background:var(--soft)}
+
+main{max-width:720px;margin:0 auto;padding-block:28px 160px}
+.chapter-head{font-family:var(--f-text);text-align:center;margin:0 0 6px;font-size:28px;font-weight:700;text-wrap:balance}
+.chapter-sub{text-align:center;color:var(--muted);font-size:13px;margin:0 0 28px;letter-spacing:.04em}
+ol.verses{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.verse{font-family:var(--f-text);font-size:var(--verse-size);line-height:1.85;padding:6px 10px;border-radius:10px;cursor:pointer;display:flex;gap:10px;transition:background .25s}
+.verse:hover{background:var(--soft)}
+.verse.now{background:var(--mark)}
+.vn{font-family:var(--f-ui);font-size:.6em;color:var(--accent);font-weight:600;min-width:1.8em;padding-top:.45em;text-align:right;font-variant-numeric:tabular-nums;flex:none}
+.vt{min-width:0;word-break:keep-all;overflow-wrap:anywhere}
+.loading{color:var(--muted);text-align:center;padding:40px 0}
+
+.chap-nav{display:flex;justify-content:space-between;gap:12px;margin-top:36px}
+.chap-nav button{flex:1;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:14px;cursor:pointer;font-size:15px}
+.chap-nav button:disabled{opacity:.4;cursor:default}
+.note{margin-top:32px;color:var(--muted);font-size:12.5px;line-height:1.7;text-align:center}
+
+.player{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
+.player .inner{max-width:720px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:8px;padding-block:10px}
+.player .mid{display:flex;align-items:center;gap:14px}
+.play{width:64px;height:64px;border-radius:50%;border:0;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;cursor:pointer}
+.play:active{transform:scale(.96)}
+.skip{width:46px;height:46px;border-radius:50%;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;cursor:pointer}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;height:40px;padding:0 14px;cursor:pointer;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.status{max-width:720px;margin:0 auto;font-size:12.5px;color:var(--muted);text-align:center;padding-top:8px;min-height:1em}
+
+.sheet{position:fixed;inset:0;z-index:20;background:var(--bg);overflow-y:auto;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.sheet-inner{max-width:720px;margin:0 auto;padding-block:16px 40px}
+.sheet-top{display:flex;align-items:center;gap:8px;margin-bottom:16px}
+.sheet-top h2{flex:1;margin:0;font-size:19px}
+.testament{margin:22px 0 10px;font-size:13px;letter-spacing:.08em;color:var(--muted);font-weight:600}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(6.6rem,1fr));gap:8px}
+.grid.ch{grid-template-columns:repeat(auto-fill,minmax(3.4rem,1fr))}
+.grid button{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:12px 6px;cursor:pointer;font-size:15px;font-variant-numeric:tabular-nums;word-break:keep-all}
+.grid button.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.field{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:10px;margin-bottom:12px}
+.field label,.field .lbl{font-weight:600}
+.field select{font:inherit;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);max-width:100%}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:8px 14px;cursor:pointer;font-variant-numeric:tabular-nums}
+.seg button.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.row input{width:22px;height:22px;accent-color:var(--accent)}
+.hint{font-size:13px;color:var(--muted);line-height:1.6;margin:0}
+.warn{background:var(--mark);border-radius:10px;padding:10px 12px;font-size:14px;line-height:1.6}
+@media (max-width:420px){.brand{display:none}.play{width:58px;height:58px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="bar gutter">
+    <div class="brand">개역한글</div>
+    <div class="ref"><button id="refBtn" aria-haspopup="dialog"><span id="refLabel">불러오는 중</span>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg></button></div>
+    <div class="sizes">
+      <button class="icon-btn" id="smaller" aria-label="글자 작게">가<sup style="font-size:9px">−</sup></button>
+      <button class="icon-btn" id="bigger" aria-label="글자 크게" style="font-size:19px">가<sup style="font-size:9px">+</sup></button>
+    </div>
+  </div>
+</header>
+
+<main class="gutter">
+  <h1 class="chapter-head" id="chHead"></h1>
+  <p class="chapter-sub">절을 누르면 그 절부터 읽어 드립니다</p>
+  <ol class="verses" id="verses"><li class="loading">본문을 불러오는 중입니다</li></ol>
+  <div class="chap-nav">
+    <button id="prevCh">← 이전 장</button>
+    <button id="nextCh">다음 장 →</button>
+  </div>
+  <p class="note">성경전서 개역한글판(1961) 본문 · 저작권 보호기간이 끝난 공유 저작물<br>음성은 사용하시는 기기의 한국어 읽기 기능으로 재생됩니다</p>
+</main>
+
+<div class="player">
+  <div class="status gutter" id="status"></div>
+  <div class="inner gutter">
+    <button class="chip" id="rateBtn" aria-label="읽기 속도">1.0×</button>
+    <div class="mid">
+      <button class="skip" id="prevV" aria-label="이전 절"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h2v14H6zM20 5v14L9 12z"/></svg></button>
+      <button class="play" id="playBtn" aria-label="듣기"><svg id="playIcon" width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button>
+      <button class="skip" id="nextV" aria-label="다음 절"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M16 5h2v14h-2zM4 5v14l11-7z"/></svg></button>
+    </div>
+    <button class="chip" id="setBtn" aria-label="음성 설정">설정</button>
+  </div>
+</div>
+
+<div class="sheet" id="picker" role="dialog" aria-modal="true" aria-labelledby="pickTitle" hidden>
+  <div class="sheet-inner gutter">
+    <div class="sheet-top">
+      <button class="icon-btn" id="pickBack" aria-label="책 목록으로" hidden>←</button>
+      <h2 id="pickTitle">성경 선택</h2>
+      <button class="icon-btn" id="pickClose" aria-label="닫기">✕</button>
+    </div>
+    <div id="bookList">
+      <div class="testament">구약 39권</div><div class="grid" id="ot"></div>
+      <div class="testament">신약 27권</div><div class="grid" id="nt"></div>
+    </div>
+    <div id="chList" hidden><div class="grid ch" id="chGrid"></div></div>
+  </div>
+</div>
+
+<div class="sheet" id="settings" role="dialog" aria-modal="true" aria-labelledby="setTitle" hidden>
+  <div class="sheet-inner gutter">
+    <div class="sheet-top"><h2 id="setTitle">듣기 설정</h2><button class="icon-btn" id="setClose" aria-label="닫기">✕</button></div>
+    <div id="voiceWarn" class="warn" hidden></div>
+    <div class="field">
+      <label for="voiceSel">목소리</label>
+      <select id="voiceSel"></select>
+      <p class="hint">기기마다 들어 있는 목소리가 다릅니다. 목소리가 없으면 휴대폰 설정의 ‘텍스트 음성 변환(TTS)’에서 한국어를 내려받아 주세요.</p>
+    </div>
+    <div class="field">
+      <span class="lbl">읽기 속도</span>
+      <div class="seg" id="rateSeg"></div>
+    </div>
+    <div class="field">
+      <div class="row"><label for="optTitle">장을 시작할 때 “○○ ○장” 읽기</label><input type="checkbox" id="optTitle"></div>
+      <div class="row"><label for="optAuto">장이 끝나면 다음 장 이어 듣기</label><input type="checkbox" id="optAuto"></div>
+      <div class="row"><label for="optScroll">읽는 절 따라 화면 움직이기</label><input type="checkbox" id="optScroll"></div>
+    </div>
+    <div class="field" id="offField" hidden>
+      <span class="lbl">인터넷 없이 듣기</span>
+      <p class="hint" id="offHint">성경 전체(약 4.4MB)를 휴대폰에 저장하면 인터넷이 없어도 모든 장을 열 수 있습니다. 한 번 들은 장은 자동으로 저장됩니다.</p>
+      <div><button class="chip" id="offBtn">성경 전체 저장하기</button></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const BOOKS=[["창세기",50],["출애굽기",40],["레위기",27],["민수기",36],["신명기",34],["여호수아",24],["사사기",21],["룻기",4],["사무엘상",31],["사무엘하",24],["열왕기상",22],["열왕기하",25],["역대상",29],["역대하",36],["에스라",10],["느헤미야",13],["에스더",10],["욥기",42],["시편",150],["잠언",31],["전도서",12],["아가",8],["이사야",66],["예레미야",52],["예레미야애가",5],["에스겔",48],["다니엘",12],["호세아",14],["요엘",3],["아모스",9],["오바댜",1],["요나",4],["미가",7],["나훔",3],["하박국",3],["스바냐",3],["학개",2],["스가랴",14],["말라기",4],["마태복음",28],["마가복음",16],["누가복음",24],["요한복음",21],["사도행전",28],["로마서",16],["고린도전서",16],["고린도후서",13],["갈라디아서",6],["에베소서",6],["빌립보서",4],["골로새서",4],["데살로니가전서",5],["데살로니가후서",3],["디모데전서",6],["디모데후서",4],["디도서",3],["빌레몬서",1],["히브리서",13],["야고보서",5],["베드로전서",5],["베드로후서",3],["요한일서",5],["요한2서",1],["요한3서",1],["유다서",1],["요한계시록",22]];
+const RATES=[0.7,0.8,0.9,1.0,1.1,1.25,1.5];
+const $=id=>document.getElementById(id);
+const synth=window.speechSynthesis||null;
+const cache={};
+const S={b:1,c:1,verses:[],cur:0,playing:false,token:0,rate:1.0,voiceURI:"",size:20,title:true,auto:true,scroll:true};
+const keep=[];
+let wake=null;
+
+function load(){try{const s=JSON.parse(localStorage.getItem("krv-listen")||"{}");Object.assign(S,{b:s.b||1,c:s.c||1,cur:s.cur||0,rate:s.rate||1.0,voiceURI:s.voiceURI||"",size:s.size||20,title:s.title!==false,auto:s.auto!==false,scroll:s.scroll!==false})}catch(e){}}
+function save(){try{localStorage.setItem("krv-listen",JSON.stringify({b:S.b,c:S.c,cur:S.cur,rate:S.rate,voiceURI:S.voiceURI,size:S.size,title:S.title,auto:S.auto,scroll:S.scroll}))}catch(e){}}
+const unit=b=>b===19?"편":"장";
+const refText=(b,c)=>`${BOOKS[b-1][0]} ${c}${unit(b)}`;
+const pad=n=>String(n).padStart(2,"0");
+
+async function getBook(b){
+  if(cache[b])return cache[b];
+  const r=await fetch(`data/${pad(b)}.json`);
+  if(!r.ok)throw new Error("load");
+  return cache[b]=await r.json();
+}
+function nextOf(b,c){if(c<BOOKS[b-1][1])return[b,c+1];if(b<66)return[b+1,1];return null}
+function prevOf(b,c){if(c>1)return[b,c-1];if(b>1)return[b-1,BOOKS[b-2][1]];return null}
+
+async function go(b,c,{verse=0,play=false,fromHash=false}={}){
+  stopSpeech();
+  S.b=b;S.c=c;S.cur=verse;
+  $("refLabel").textContent=refText(b,c);
+  $("chHead").textContent=refText(b,c);
+  document.title=`${refText(b,c)} · 개역한글 성경 듣기`;
+  $("verses").innerHTML='<li class="loading">본문을 불러오는 중입니다</li>';
+  try{ S.verses=(await getBook(b))[c-1]||[]; }
+  catch(e){ $("verses").innerHTML='<li class="loading">본문을 불러오지 못했습니다. 인터넷 연결을 확인한 뒤 다시 눌러 주세요.</li>'; return; }
+  if(S.cur>=S.verses.length)S.cur=0;
+  const ol=$("verses"); ol.innerHTML="";
+  S.verses.forEach((t,i)=>{
+    const li=document.createElement("li"); li.className="verse"; li.dataset.i=i; li.tabIndex=0;
+    li.innerHTML=`<span class="vn">${i+1}</span><span class="vt"></span>`;
+    li.querySelector(".vt").textContent=t;
+    ol.appendChild(li);
+  });
+  $("prevCh").disabled=!prevOf(b,c); $("nextCh").disabled=!nextOf(b,c);
+  const h=`#b${b}-c${c}`;
+  if(!fromHash&&location.hash!==h){ignoreHash=h;location.hash=h;}
+  if(!play){ window.scrollTo(0,0); mark(S.cur,S.cur>0); }
+  save();
+  if(play)speakFrom(verse,true);
+}
+
+function mark(i,scroll=true){
+  document.querySelectorAll(".verse.now").forEach(e=>e.classList.remove("now"));
+  const el=document.querySelector(`.verse[data-i="${i}"]`);
+  if(!el||(!S.playing&&i===0))return;
+  el.classList.add("now");
+  if(scroll&&S.scroll){
+    const r=el.getBoundingClientRect();
+    if(r.top<90||r.bottom>window.innerHeight-150) el.scrollIntoView({block:"center",behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth"});
+  }
+}
+
+function pickVoice(){
+  if(!synth)return null;
+  const vs=synth.getVoices().filter(v=>/^ko/i.test(v.lang));
+  return vs.find(v=>v.voiceURI===S.voiceURI)||vs.find(v=>v.default)||vs[0]||null;
+}
+function utter(text,onend){
+  const u=new SpeechSynthesisUtterance(text);
+  u.lang="ko-KR"; u.rate=S.rate; const v=pickVoice(); if(v)u.voice=v;
+  const t=S.token;
+  u.onend=()=>{if(t===S.token)onend()};
+  u.onerror=e=>{if(t!==S.token)return; if(e.error==="interrupted"||e.error==="canceled")return; status("음성 재생 중 문제가 생겨 다음 절로 넘어갑니다"); onend()};
+  keep.push(u); if(keep.length>20)keep.shift();
+  synth.speak(u);
+}
+
+function speakFrom(i,withTitle=false){
+  if(!synth){status("이 브라우저는 소리 내어 읽기를 지원하지 않습니다. 크롬이나 사파리에서 열어 주세요.");return}
+  S.token++; synth.cancel();
+  S.playing=true; S.cur=i; setPlayIcon(); requestWake();
+  if(!pickVoice()&&synth.getVoices().length) status("한국어 목소리가 없어 기본 목소리로 읽습니다. 설정을 확인해 주세요.");
+  else status("");
+  const tok=S.token;
+  setTimeout(()=>{
+    if(tok!==S.token)return;
+    if(withTitle&&S.title&&i===0) utter(refText(S.b,S.c),()=>speakVerse(0));
+    else speakVerse(i);
+  },60);
+}
+function speakVerse(i){
+  if(i>=S.verses.length){
+    const n=nextOf(S.b,S.c);
+    if(S.auto&&n){go(n[0],n[1],{play:true});}
+    else{stopSpeech();S.cur=0;save();status("이 장을 다 읽었습니다");}
+    return;
+  }
+  S.cur=i; mark(i); save();
+  status(`${refText(S.b,S.c)} ${i+1}절 읽는 중`);
+  utter(S.verses[i],()=>speakVerse(i+1));
+}
+function stopSpeech(){
+  S.token++; if(synth)synth.cancel();
+  S.playing=false; setPlayIcon(); releaseWake();
+}
+function pause(){ stopSpeech(); status(`${refText(S.b,S.c)} ${S.cur+1}절에서 멈췄습니다`); }
+
+function setPlayIcon(){
+  $("playIcon").innerHTML=S.playing?'<path d="M7 5h4v14H7zM13 5h4v14h-4z"/>':'<path d="M8 5v14l11-7z"/>';
+  $("playBtn").setAttribute("aria-label",S.playing?"멈춤":"듣기");
+}
+function status(t){$("status").textContent=t}
+async function requestWake(){try{if("wakeLock" in navigator&&!wake){wake=await navigator.wakeLock.request("screen");wake.addEventListener("release",()=>{wake=null})}}catch(e){wake=null}}
+function releaseWake(){try{wake&&wake.release()}catch(e){} wake=null}
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&S.playing)requestWake()});
+
+function applySize(){document.documentElement.style.setProperty("--verse-size",S.size+"px")}
+const fmtRate=r=>r.toFixed(Math.round(r*100)%10?2:1)+"×";
+function rateLabel(){$("rateBtn").textContent=fmtRate(S.rate)}
+function setRate(r){S.rate=r;rateLabel();renderRates();save();if(S.playing)speakFrom(S.cur)}
+
+/* picker */
+function openPicker(){
+  const mk=(host,from,to)=>{host.innerHTML="";for(let b=from;b<=to;b++){const btn=document.createElement("button");btn.textContent=BOOKS[b-1][0];if(b===S.b)btn.className="on";btn.onclick=()=>{if(BOOKS[b-1][1]===1){closeSheet("picker");go(b,1)}else showChapters(b)};host.appendChild(btn)}};
+  mk($("ot"),1,39); mk($("nt"),40,66);
+  $("bookList").hidden=false;$("chList").hidden=true;$("pickBack").hidden=true;$("pickTitle").textContent="성경 선택";
+  openSheet("picker");
+}
+function showChapters(b){
+  const g=$("chGrid");g.innerHTML="";
+  for(let c=1;c<=BOOKS[b-1][1];c++){const btn=document.createElement("button");btn.textContent=c;btn.setAttribute("aria-label",refText(b,c));if(b===S.b&&c===S.c)btn.className="on";btn.onclick=()=>{closeSheet("picker");go(b,c)};g.appendChild(btn)}
+  $("bookList").hidden=true;$("chList").hidden=false;$("pickBack").hidden=false;
+  $("pickTitle").textContent=`${BOOKS[b-1][0]} · ${unit(b)} 선택`;
+  $("picker").scrollTop=0;
+}
+let lastFocus=null;
+function openSheet(id){lastFocus=document.activeElement;$(id).hidden=false;document.body.style.overflow="hidden";setTimeout(()=>$(id).querySelector("button,select").focus(),0)}
+function closeSheet(id){$(id).hidden=true;document.body.style.overflow="";lastFocus&&lastFocus.focus&&lastFocus.focus()}
+
+/* settings */
+function renderRates(){const seg=$("rateSeg");seg.innerHTML="";RATES.forEach(r=>{const b=document.createElement("button");b.textContent=fmtRate(r);if(r===S.rate)b.className="on";b.onclick=()=>setRate(r);seg.appendChild(b)})}
+function renderVoices(){
+  const sel=$("voiceSel"); sel.innerHTML="";
+  if(!synth){$("voiceWarn").hidden=false;$("voiceWarn").textContent="이 브라우저는 소리 내어 읽기를 지원하지 않습니다. 크롬, 사파리, 삼성 인터넷에서 열어 주세요.";return}
+  const vs=synth.getVoices().filter(v=>/^ko/i.test(v.lang));
+  if(!vs.length){
+    const o=document.createElement("option");o.textContent="기본 목소리";sel.appendChild(o);
+    $("voiceWarn").hidden=!synth.getVoices().length;
+    $("voiceWarn").textContent="이 기기에서 한국어 목소리를 찾지 못했습니다. 휴대폰 설정에서 ‘텍스트 음성 변환’에 한국어를 추가하면 더 자연스럽게 들립니다.";
+    return;
+  }
+  $("voiceWarn").hidden=true;
+  const cur=pickVoice();
+  vs.forEach(v=>{const o=document.createElement("option");o.value=v.voiceURI;o.textContent=v.name.replace(/Microsoft |Google /,"")+(v.localService?"":" (온라인)");if(cur&&v.voiceURI===cur.voiceURI)o.selected=true;sel.appendChild(o)});
+}
+$("voiceSel").onchange=e=>{S.voiceURI=e.target.value;save();if(S.playing)speakFrom(S.cur)};
+["Title","Auto","Scroll"].forEach(k=>{const el=$("opt"+k);el.onchange=()=>{S[k.toLowerCase()]=el.checked;save()}});
+
+/* wiring */
+$("refBtn").onclick=openPicker;
+$("pickClose").onclick=()=>closeSheet("picker");
+$("pickBack").onclick=()=>{$("bookList").hidden=false;$("chList").hidden=true;$("pickBack").hidden=true;$("pickTitle").textContent="성경 선택"};
+$("setBtn").onclick=()=>{refreshOff();renderVoices();renderRates();$("optTitle").checked=S.title;$("optAuto").checked=S.auto;$("optScroll").checked=S.scroll;openSheet("settings")};
+$("setClose").onclick=()=>closeSheet("settings");
+$("playBtn").onclick=()=>{if(S.playing)pause();else speakFrom(S.cur,S.cur===0)};
+$("prevV").onclick=()=>{const i=Math.max(0,S.cur-1);if(S.playing)speakFrom(i);else{S.cur=i;mark(i);save()}};
+$("nextV").onclick=()=>{const i=Math.min(S.verses.length-1,S.cur+1);if(S.playing)speakFrom(i);else{S.cur=i;mark(i);save()}};
+$("rateBtn").onclick=()=>{const k=RATES.indexOf(S.rate);setRate(RATES[(k+1)%RATES.length])};
+$("prevCh").onclick=()=>{const p=prevOf(S.b,S.c);if(p)go(p[0],p[1],{play:S.playing})};
+$("nextCh").onclick=()=>{const n=nextOf(S.b,S.c);if(n)go(n[0],n[1],{play:S.playing})};
+$("smaller").onclick=()=>{S.size=Math.max(15,S.size-2);applySize();save()};
+$("bigger").onclick=()=>{S.size=Math.min(34,S.size+2);applySize();save()};
+$("verses").addEventListener("click",e=>{const li=e.target.closest(".verse");if(li)speakFrom(+li.dataset.i)});
+$("verses").addEventListener("keydown",e=>{if((e.key==="Enter"||e.key===" ")&&e.target.classList.contains("verse")){e.preventDefault();speakFrom(+e.target.dataset.i)}});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"){if(!$("picker").hidden)closeSheet("picker");else if(!$("settings").hidden)closeSheet("settings")}});
+if(synth&&"onvoiceschanged" in synth)synth.onvoiceschanged=()=>{if(!$("settings").hidden)renderVoices()};
+
+
+/* offline */
+const hasSW="serviceWorker" in navigator && window.caches;
+async function cachedCount(){try{const c=await caches.open("krv-data");const k=await c.keys();return k.filter(r=>/\/data\/\d\d\.json$/.test(r.url)).length}catch(e){return 0}}
+async function refreshOff(){if(!hasSW)return;$("offField").hidden=false;const n=await cachedCount();if(n>=66){$("offBtn").textContent="저장 완료 (66권)";$("offBtn").disabled=true}else{$("offBtn").textContent=n?`성경 전체 저장하기 (현재 ${n}권 저장됨)`:"성경 전체 저장하기";$("offBtn").disabled=false}}
+$("offBtn").onclick=async()=>{
+  const btn=$("offBtn");btn.disabled=true;let fail=0;
+  for(let b=1;b<=66;b++){btn.textContent=`저장하는 중… ${b}/66`;try{const r=await fetch(`data/${pad(b)}.json`);if(r.ok)cache[b]=cache[b]||await r.json();else fail++}catch(e){fail++}}
+  if(fail){btn.textContent=`${fail}권을 저장하지 못했습니다. 다시 눌러 주세요`;btn.disabled=false}else refreshOff();
+};
+if(hasSW){window.addEventListener("load",()=>{navigator.serviceWorker.register("sw.js").catch(()=>{})})}
+
+let ignoreHash=null;
+function parseHash(){const m=/^#b(\d+)-c(\d+)$/.exec(location.hash);if(!m)return null;const b=+m[1],c=+m[2];if(b<1||b>66||c<1||c>BOOKS[b-1][1])return null;return[b,c]}
+window.addEventListener("hashchange",()=>{if(location.hash===ignoreHash){ignoreHash=null;return}const p=parseHash();if(p&&(p[0]!==S.b||p[1]!==S.c))go(p[0],p[1],{fromHash:true})});
+
+load(); applySize(); rateLabel();
+const h=parseHash();
+if(h&&(h[0]!==S.b||h[1]!==S.c)) go(h[0],h[1],{fromHash:true});
+else go(S.b,S.c,{verse:S.cur,fromHash:!!h});
+</script>
+</body>
+</html>
