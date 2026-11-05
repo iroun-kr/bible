@@ -56,7 +56,7 @@ header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var
 .icon-btn{border:1px solid var(--line);background:var(--surface);border-radius:10px;min-width:40px;height:40px;display:grid;place-items:center;cursor:pointer;font-weight:600}
 .icon-btn:active{background:var(--soft)}
 
-main{max-width:720px;margin:0 auto;padding-block:28px 160px}
+main{max-width:720px;margin:0 auto;padding-block:28px 220px}
 .chapter-head{font-family:var(--f-text);text-align:center;margin:0 0 6px;font-size:28px;font-weight:700;text-wrap:balance}
 .chapter-sub{text-align:center;color:var(--muted);font-size:13px;margin:0 0 28px;letter-spacing:.04em}
 ol.verses{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
@@ -79,6 +79,15 @@ ol.verses{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;
 .play:active{transform:scale(.96)}
 .skip{width:46px;height:46px;border-radius:50%;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;cursor:pointer}
 .chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;height:40px;padding:0 14px;cursor:pointer;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.speed{max-width:720px;margin:0 auto;display:flex;align-items:center;gap:6px;padding-top:10px}
+.speed .lab{font-size:12.5px;color:var(--muted);white-space:nowrap;font-weight:600}
+.speed .opts{flex:1;display:grid;grid-template-columns:repeat(7,1fr);gap:4px;min-width:0}
+.speed .opts button{border:1px solid var(--line);background:var(--bg);border-radius:8px;height:38px;padding:0;cursor:pointer;font-size:14px;font-weight:600;font-variant-numeric:tabular-nums}
+.speed .opts button.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.speed .opts button small{display:block;font-size:10px;font-weight:500;line-height:1;margin-top:1px}
+.guide{margin:0;padding-left:18px;font-size:14px;line-height:1.75}
+.guide b{font-weight:600}
+.hint,.guide,.note{word-break:keep-all}
 .status{max-width:720px;margin:0 auto;font-size:12.5px;color:var(--muted);text-align:center;padding-top:8px;min-height:1em}
 
 .sheet{position:fixed;inset:0;z-index:20;background:var(--bg);overflow-y:auto;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -130,9 +139,13 @@ ol.verses{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;
 </main>
 
 <div class="player">
+  <div class="speed gutter" role="group" aria-label="읽기 속도">
+    <span class="lab">속도</span>
+    <div class="opts" id="speedBar"></div>
+  </div>
   <div class="status gutter" id="status"></div>
   <div class="inner gutter">
-    <button class="chip" id="rateBtn" aria-label="읽기 속도">1.0×</button>
+    <button class="chip" id="listBtn" aria-label="성경 목록">목록</button>
     <div class="mid">
       <button class="skip" id="prevV" aria-label="이전 절"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h2v14H6zM20 5v14L9 12z"/></svg></button>
       <button class="play" id="playBtn" aria-label="듣기"><svg id="playIcon" width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button>
@@ -167,8 +180,17 @@ ol.verses{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;
       <p class="hint">기기마다 들어 있는 목소리가 다릅니다. 목소리가 없으면 휴대폰 설정의 ‘텍스트 음성 변환(TTS)’에서 한국어를 내려받아 주세요.</p>
     </div>
     <div class="field">
-      <span class="lbl">읽기 속도</span>
-      <div class="seg" id="rateSeg"></div>
+      <span class="lbl">절과 절 사이 쉬는 시간</span>
+      <div class="seg" id="gapSeg"></div>
+      <p class="hint">쉼표나 문장이 끝나는 곳에서도 잠깐 쉬어 읽습니다.</p>
+    </div>
+    <div class="field">
+      <span class="lbl">더 부드러운 목소리로 듣는 방법</span>
+      <ol class="guide">
+        <li><b>아이폰</b>: 설정 → 손쉬운 사용 → 읽기 및 말하기 → 음성 → 한국어 → <b>유나(고품질)</b> 또는 프리미엄 음성 내려받기</li>
+        <li><b>갤럭시</b>: 설정 → 일반 → 텍스트 음성 변환 → 기본 엔진에서 <b>삼성 TTS</b> 또는 <b>Google TTS</b> 선택 → 한국어 음성 데이터 내려받기</li>
+        <li>내려받은 뒤 이 앱을 다시 열고 위 <b>목소리</b>에서 새 음성을 고르세요.</li>
+      </ol>
     </div>
     <div class="field">
       <div class="row"><label for="optTitle">장을 시작할 때 “○○ ○장” 읽기</label><input type="checkbox" id="optTitle"></div>
@@ -186,15 +208,36 @@ ol.verses{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;
 <script>
 const BOOKS=[["창세기",50],["출애굽기",40],["레위기",27],["민수기",36],["신명기",34],["여호수아",24],["사사기",21],["룻기",4],["사무엘상",31],["사무엘하",24],["열왕기상",22],["열왕기하",25],["역대상",29],["역대하",36],["에스라",10],["느헤미야",13],["에스더",10],["욥기",42],["시편",150],["잠언",31],["전도서",12],["아가",8],["이사야",66],["예레미야",52],["예레미야애가",5],["에스겔",48],["다니엘",12],["호세아",14],["요엘",3],["아모스",9],["오바댜",1],["요나",4],["미가",7],["나훔",3],["하박국",3],["스바냐",3],["학개",2],["스가랴",14],["말라기",4],["마태복음",28],["마가복음",16],["누가복음",24],["요한복음",21],["사도행전",28],["로마서",16],["고린도전서",16],["고린도후서",13],["갈라디아서",6],["에베소서",6],["빌립보서",4],["골로새서",4],["데살로니가전서",5],["데살로니가후서",3],["디모데전서",6],["디모데후서",4],["디도서",3],["빌레몬서",1],["히브리서",13],["야고보서",5],["베드로전서",5],["베드로후서",3],["요한일서",5],["요한2서",1],["요한3서",1],["유다서",1],["요한계시록",22]];
 const RATES=[0.7,0.8,0.9,1.0,1.1,1.25,1.5];
+const GAPS={short:[350,150],normal:[700,280],long:[1100,450]};
+const GAP_LABEL={short:"짧게",normal:"보통",long:"길게"};
+function chunkVerse(t){
+  const words=t.trim().split(/\s+/);
+  const strong=/(?:[,;:]|니라|도다|리라|노라|더라|로다|하라|시라|이니이다|나이다|소서|가로되|가라사대|이르되|하되|시되|하기를|시기를)$/;
+  const weak=/(?:[가-힣]고|며|하니|시니|되니|으니|이니|더니|하매|시매|되매|하면|으면|이면|하나|으나|거든|므로|리니)$/;
+  const noWeak=/^(?:창고|최고|사고|광고|그리고)$/;
+  const quote=/^(?:하|칭|일컬|이르|이름|불러|부르)/;
+  const out=[];let cur=[];let len=0;let used=0;const total=t.length;
+  words.forEach((w,k)=>{
+    cur.push(w);len+=w.length+1;used+=w.length+1;
+    if(k===words.length-1)return;
+    const rest=total-used, next=words[k+1];
+    const s=strong.test(w)&&!quote.test(next)&&len>=8&&rest>=8;
+    const wk=weak.test(w)&&!noWeak.test(w)&&len>=20&&rest>=14;
+    if(s||wk){out.push(cur.join(" "));cur=[];len=0}
+  });
+  if(cur.length)out.push(cur.join(" "));
+  return out;
+}
+
 const $=id=>document.getElementById(id);
 const synth=window.speechSynthesis||null;
 const cache={};
-const S={b:1,c:1,verses:[],cur:0,playing:false,token:0,rate:1.0,voiceURI:"",size:20,title:true,auto:true,scroll:true};
+const S={b:1,c:1,verses:[],cur:0,playing:false,token:0,rate:0.9,gap:"normal",voiceURI:"",size:20,title:true,auto:true,scroll:true};
 const keep=[];
 let wake=null;
 
-function load(){try{const s=JSON.parse(localStorage.getItem("krv-listen")||"{}");Object.assign(S,{b:s.b||1,c:s.c||1,cur:s.cur||0,rate:s.rate||1.0,voiceURI:s.voiceURI||"",size:s.size||20,title:s.title!==false,auto:s.auto!==false,scroll:s.scroll!==false})}catch(e){}}
-function save(){try{localStorage.setItem("krv-listen",JSON.stringify({b:S.b,c:S.c,cur:S.cur,rate:S.rate,voiceURI:S.voiceURI,size:S.size,title:S.title,auto:S.auto,scroll:S.scroll}))}catch(e){}}
+function load(){try{const s=JSON.parse(localStorage.getItem("krv-listen")||"{}");Object.assign(S,{b:s.b||1,c:s.c||1,cur:s.cur||0,rate:s.rate||0.9,gap:GAPS[s.gap]?s.gap:"normal",voiceURI:s.voiceURI||"",size:s.size||20,title:s.title!==false,auto:s.auto!==false,scroll:s.scroll!==false})}catch(e){}}
+function save(){try{localStorage.setItem("krv-listen",JSON.stringify({b:S.b,c:S.c,cur:S.cur,rate:S.rate,gap:S.gap,voiceURI:S.voiceURI,size:S.size,title:S.title,auto:S.auto,scroll:S.scroll}))}catch(e){}}
 const unit=b=>b===19?"편":"장";
 const refText=(b,c)=>`${BOOKS[b-1][0]} ${c}${unit(b)}`;
 const pad=n=>String(n).padStart(2,"0");
@@ -246,9 +289,14 @@ function mark(i,scroll=true){
 
 function pickVoice(){
   if(!synth)return null;
-  const vs=synth.getVoices().filter(v=>/^ko/i.test(v.lang));
-  return vs.find(v=>v.voiceURI===S.voiceURI)||vs.find(v=>v.default)||vs[0]||null;
+  const vs=koVoices();
+  return vs.find(v=>v.voiceURI===S.voiceURI)||vs[0]||null;
 }
+function voiceScore(v){let s=0;const n=v.name;
+  if(/premium|프리미엄/i.test(n))s+=50; if(/enhanced|고품질|향상/i.test(n))s+=40; if(/natural|neural|online/i.test(n))s+=30;
+  if(/google/i.test(n))s+=15; if(/samsung|삼성/i.test(n))s+=12; if(/yuna|유나|sora|heami|seoyeon|injoon|sunhi|hyunsu/i.test(n))s+=5;
+  if(v.default)s+=3; return s}
+function koVoices(){if(!synth)return[];return synth.getVoices().filter(v=>/^ko/i.test(v.lang)).sort((a,b)=>voiceScore(b)-voiceScore(a))}
 function utter(text,onend){
   const u=new SpeechSynthesisUtterance(text);
   u.lang="ko-KR"; u.rate=S.rate; const v=pickVoice(); if(v)u.voice=v;
@@ -268,7 +316,7 @@ function speakFrom(i,withTitle=false){
   const tok=S.token;
   setTimeout(()=>{
     if(tok!==S.token)return;
-    if(withTitle&&S.title&&i===0) utter(refText(S.b,S.c),()=>speakVerse(0));
+    if(withTitle&&S.title&&i===0) utter(refText(S.b,S.c),()=>later(()=>speakVerse(0),1000));
     else speakVerse(i);
   },60);
 }
@@ -281,8 +329,12 @@ function speakVerse(i){
   }
   S.cur=i; mark(i); save();
   status(`${refText(S.b,S.c)} ${i+1}절 읽는 중`);
-  utter(S.verses[i],()=>speakVerse(i+1));
+  const parts=chunkVerse(S.verses[i]);const [gapV,gapC]=GAPS[S.gap];
+  const step=j=>{if(j>=parts.length){later(()=>speakVerse(i+1),gapV);return}
+    utter(parts[j],()=>{if(j+1<parts.length)later(()=>step(j+1),gapC);else step(j+1)})};
+  step(0);
 }
+function later(fn,ms){const t=S.token;setTimeout(()=>{if(t===S.token&&S.playing)fn()},ms)}
 function stopSpeech(){
   S.token++; if(synth)synth.cancel();
   S.playing=false; setPlayIcon(); releaseWake();
@@ -300,8 +352,9 @@ document.addEventListener("visibilitychange",()=>{if(document.visibilityState===
 
 function applySize(){document.documentElement.style.setProperty("--verse-size",S.size+"px")}
 const fmtRate=r=>r.toFixed(Math.round(r*100)%10?2:1)+"×";
-function rateLabel(){$("rateBtn").textContent=fmtRate(S.rate)}
-function setRate(r){S.rate=r;rateLabel();renderRates();save();if(S.playing)speakFrom(S.cur)}
+function rateLabel(){renderSpeedBar()}
+function renderSpeedBar(){const bar=$("speedBar");bar.innerHTML="";RATES.forEach(r=>{const b=document.createElement("button");b.innerHTML=r.toFixed(Math.round(r*100)%10?2:1)+(r===0.7?"<small>느리게</small>":r===1.0?"<small>보통</small>":r===1.5?"<small>빠르게</small>":"");b.setAttribute("aria-label",`${fmtRate(r)} 속도`);b.setAttribute("aria-pressed",r===S.rate);if(r===S.rate)b.className="on";b.onclick=()=>setRate(r);bar.appendChild(b)})}
+function setRate(r){S.rate=r;renderSpeedBar();save();status(`읽기 속도 ${fmtRate(r)}`);if(S.playing)speakFrom(S.cur)}
 
 /* picker */
 function openPicker(){
@@ -322,11 +375,11 @@ function openSheet(id){lastFocus=document.activeElement;$(id).hidden=false;docum
 function closeSheet(id){$(id).hidden=true;document.body.style.overflow="";lastFocus&&lastFocus.focus&&lastFocus.focus()}
 
 /* settings */
-function renderRates(){const seg=$("rateSeg");seg.innerHTML="";RATES.forEach(r=>{const b=document.createElement("button");b.textContent=fmtRate(r);if(r===S.rate)b.className="on";b.onclick=()=>setRate(r);seg.appendChild(b)})}
+function renderRates(){const seg=$("gapSeg");seg.innerHTML="";Object.keys(GAPS).forEach(k=>{const b=document.createElement("button");b.textContent=GAP_LABEL[k];if(k===S.gap)b.className="on";b.onclick=()=>{S.gap=k;save();renderRates()};seg.appendChild(b)})}
 function renderVoices(){
   const sel=$("voiceSel"); sel.innerHTML="";
   if(!synth){$("voiceWarn").hidden=false;$("voiceWarn").textContent="이 브라우저는 소리 내어 읽기를 지원하지 않습니다. 크롬, 사파리, 삼성 인터넷에서 열어 주세요.";return}
-  const vs=synth.getVoices().filter(v=>/^ko/i.test(v.lang));
+  const vs=koVoices();
   if(!vs.length){
     const o=document.createElement("option");o.textContent="기본 목소리";sel.appendChild(o);
     $("voiceWarn").hidden=!synth.getVoices().length;
@@ -349,7 +402,7 @@ $("setClose").onclick=()=>closeSheet("settings");
 $("playBtn").onclick=()=>{if(S.playing)pause();else speakFrom(S.cur,S.cur===0)};
 $("prevV").onclick=()=>{const i=Math.max(0,S.cur-1);if(S.playing)speakFrom(i);else{S.cur=i;mark(i);save()}};
 $("nextV").onclick=()=>{const i=Math.min(S.verses.length-1,S.cur+1);if(S.playing)speakFrom(i);else{S.cur=i;mark(i);save()}};
-$("rateBtn").onclick=()=>{const k=RATES.indexOf(S.rate);setRate(RATES[(k+1)%RATES.length])};
+$("listBtn").onclick=openPicker;
 $("prevCh").onclick=()=>{const p=prevOf(S.b,S.c);if(p)go(p[0],p[1],{play:S.playing})};
 $("nextCh").onclick=()=>{const n=nextOf(S.b,S.c);if(n)go(n[0],n[1],{play:S.playing})};
 $("smaller").onclick=()=>{S.size=Math.max(15,S.size-2);applySize();save()};
