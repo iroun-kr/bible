@@ -29,7 +29,7 @@ img{max-width:100%}
   --accent:#1F5E74; --accent-ink:#FFFFFF; --mark:#FBEFC2; --soft:#E8EEEC;
   --f-text:"Gowun Batang","Nanum Myeongjo","AppleMyungjo","Batang",serif;
   --f-ui:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
-  --verse-size:20px;
+  --verse-size:22px;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#111619; --surface:#1A2126; --ink:#E6EAE7; --muted:#98A4A9; --line:#2A3338;
@@ -109,6 +109,37 @@ ol.verses{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;
 .row input{width:22px;height:22px;accent-color:var(--accent)}
 .hint{font-size:13px;color:var(--muted);line-height:1.6;margin:0}
 .warn{background:var(--mark);border-radius:10px;padding:10px 12px;font-size:14px;line-height:1.6}
+.hist-btn{font-size:14px;padding:0 10px}
+.done-row{display:flex;justify-content:center;margin-top:18px}
+.done-btn{border:1px solid var(--accent);color:var(--accent);background:transparent;border-radius:999px;padding:12px 20px;cursor:pointer;font-size:15px;font-weight:600}
+.done-btn.on{background:var(--accent);color:var(--accent-ink)}
+.grid button.read{background:color-mix(in srgb,var(--accent) 26%,var(--surface));border-color:color-mix(in srgb,var(--accent) 45%,var(--line))}
+.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:12px}
+@media (min-width:560px){.stats{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:2px}
+.stat b{font-size:26px;line-height:1.2;font-variant-numeric:tabular-nums;color:var(--accent)}
+.stat b small{font-size:14px;font-weight:600;margin-left:2px}
+.stat span{font-size:13px;color:var(--muted)}
+.pbar{display:block;height:10px;border-radius:99px;background:var(--line);overflow:hidden}
+.pbar i{display:block;height:100%;background:var(--accent);border-radius:99px;width:0}
+.bar-row{display:flex;justify-content:space-between;gap:8px;font-size:14px}
+.bar-row span{color:var(--muted);font-variant-numeric:tabular-nums}
+.week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;height:120px}
+.week div{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;min-width:0}
+.week i{width:100%;max-width:30px;background:var(--accent);border-radius:6px 6px 2px 2px;min-height:3px;opacity:.85}
+.week i.zero{background:var(--line)}
+.week .today{color:var(--ink);font-weight:600}
+.books{display:flex;flex-direction:column}
+.books button{display:grid;grid-template-columns:minmax(0,7.5em) minmax(0,1fr) 4.5em;align-items:center;gap:10px;border:0;background:transparent;padding:9px 4px;border-radius:8px;cursor:pointer;text-align:left;font-size:15px;word-break:keep-all}
+.books button:hover{background:var(--soft)}
+.books .n{text-align:right;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.recent{list-style:none;margin:0;padding:0}
+.recent button{width:100%;display:flex;justify-content:space-between;align-items:center;gap:12px;border:0;border-bottom:1px solid var(--line);background:transparent;padding:12px 4px;cursor:pointer;font-size:15px;text-align:left}
+.recent .when{color:var(--muted);font-size:13px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.recent .how{font-size:12px;color:var(--accent);margin-left:6px}
+.empty{color:var(--muted);font-size:14px;padding:8px 4px;margin:0}
+.backup{display:flex;flex-wrap:wrap;gap:8px}
+#impText{width:100%;min-height:90px;font:13px/1.5 ui-monospace,monospace;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
 @media (max-width:420px){.brand{display:none}.play{width:58px;height:58px}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
 </style>
@@ -118,6 +149,7 @@ ol.verses{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;
 <header>
   <div class="bar gutter">
     <div class="brand">개역한글</div>
+    <button class="icon-btn hist-btn" id="histBtn" aria-label="읽은 기록 보기">기록</button>
     <div class="ref"><button id="refBtn" aria-haspopup="dialog"><span id="refLabel">불러오는 중</span>
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg></button></div>
     <div class="sizes">
@@ -135,7 +167,8 @@ ol.verses{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;
     <button id="prevCh">← 이전 장</button>
     <button id="nextCh">다음 장 →</button>
   </div>
-  <p class="note">성경전서 개역한글판(1961) 본문 · 저작권 보호기간이 끝난 공유 저작물<br>음성은 사용하시는 기기의 한국어 읽기 기능으로 재생됩니다</p>
+  <div class="done-row"><button class="done-btn" id="doneBtn">이 장을 읽었어요</button></div>
+  <p class="note">성경전서 개역한글판(1961) 본문 · 저작권 보호기간이 끝난 공유 저작물<br>녹음된 장은 AI 성우(구글 Chirp 3 HD)의 낭독, 그 밖의 장은 기기의 한국어 읽기 기능으로 재생됩니다</p>
 </main>
 
 <div class="player">
@@ -170,12 +203,53 @@ ol.verses{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;
   </div>
 </div>
 
+<div class="sheet" id="history" role="dialog" aria-modal="true" aria-labelledby="histTitle" hidden>
+  <div class="sheet-inner gutter">
+    <div class="sheet-top">
+      <button class="icon-btn" id="histBack" aria-label="기록으로 돌아가기" hidden>←</button>
+      <h2 id="histTitle">읽은 기록</h2>
+      <button class="icon-btn" id="histClose" aria-label="닫기">✕</button>
+    </div>
+    <div id="histMain">
+      <div class="stats" id="stats"></div>
+      <div class="field">
+        <span class="lbl">최근 7일 들은 시간 (분)</span>
+        <div class="week" id="week"></div>
+      </div>
+      <div class="field">
+        <div class="bar-row"><b>구약</b><span id="otTxt"></span></div><div class="pbar"><i id="otBar"></i></div>
+        <div class="bar-row"><b>신약</b><span id="ntTxt"></span></div><div class="pbar"><i id="ntBar"></i></div>
+      </div>
+      <div class="testament">최근 읽은 장</div>
+      <ol class="recent" id="recent"></ol>
+      <div class="testament">책별 진도</div>
+      <div class="books" id="bookProg"></div>
+      <div class="field" style="margin-top:22px">
+        <span class="lbl">기록 백업하기</span>
+        <p class="hint">기록은 이 휴대폰(브라우저)에만 저장됩니다. 휴대폰을 바꾸거나 인터넷 기록을 지우기 전에 복사해서 메모장 등에 보관하세요.</p>
+        <div class="backup"><button class="chip" id="expBtn">기록 복사하기</button><button class="chip" id="impBtn">기록 불러오기</button></div>
+        <textarea id="impText" hidden aria-label="백업한 기록 붙여넣기" placeholder="복사해 둔 기록을 여기에 붙여넣으세요"></textarea>
+        <div class="backup" id="impRow" hidden><button class="chip" id="impGo">불러오기</button></div>
+        <p class="hint" id="bakMsg" role="status"></p>
+      </div>
+    </div>
+    <div id="histBook" hidden>
+      <div class="grid ch" id="histChGrid"></div>
+      <p class="hint" style="margin-top:12px">색이 칠해진 장이 읽은 장입니다. 누르면 그 장으로 이동합니다.</p>
+    </div>
+  </div>
+</div>
+
 <div class="sheet" id="settings" role="dialog" aria-modal="true" aria-labelledby="setTitle" hidden>
   <div class="sheet-inner gutter">
     <div class="sheet-top"><h2 id="setTitle">듣기 설정</h2><button class="icon-btn" id="setClose" aria-label="닫기">✕</button></div>
+    <div class="field">
+      <div class="row"><label for="optRec">녹음된 낭독으로 듣기</label><input type="checkbox" id="optRec"></div>
+      <p class="hint" id="recHint">녹음이 준비된 장은 AI 성우의 낭독을 들려 드립니다. 화면을 꺼도 계속 들을 수 있습니다. 아직 녹음이 없는 장은 아래 기기 목소리로 읽습니다.</p>
+    </div>
     <div id="voiceWarn" class="warn" hidden></div>
     <div class="field">
-      <label for="voiceSel">목소리</label>
+      <label for="voiceSel">기기 목소리 (녹음이 없는 장)</label>
       <select id="voiceSel"></select>
       <p class="hint">기기마다 들어 있는 목소리가 다릅니다. 목소리가 없으면 휴대폰 설정의 ‘텍스트 음성 변환(TTS)’에서 한국어를 내려받아 주세요.</p>
     </div>
@@ -215,7 +289,7 @@ function chunkVerse(t){
   const strong=/(?:[,;:]|니라|도다|리라|노라|더라|로다|하라|시라|이니이다|나이다|소서|가로되|가라사대|이르되|하되|시되|하기를|시기를)$/;
   const weak=/(?:[가-힣]고|며|하니|시니|되니|으니|이니|더니|하매|시매|되매|하면|으면|이면|하나|으나|거든|므로|리니)$/;
   const noWeak=/^(?:창고|최고|사고|광고|그리고)$/;
-  const quote=/^(?:하|칭|일컬|이르|이름|불러|부르)/;
+  const quote=/^(?:하(?!나님)|칭|일컬|이르|이름|불러|부르)/;
   const out=[];let cur=[];let len=0;let used=0;const total=t.length;
   words.forEach((w,k)=>{
     cur.push(w);len+=w.length+1;used+=w.length+1;
@@ -232,12 +306,15 @@ function chunkVerse(t){
 const $=id=>document.getElementById(id);
 const synth=window.speechSynthesis||null;
 const cache={};
-const S={b:1,c:1,verses:[],cur:0,playing:false,token:0,rate:0.9,gap:"normal",voiceURI:"",size:20,title:true,auto:true,scroll:true};
+const AUDIO="https://pub-1a318484647b48338368fabd06fb4662.r2.dev/audio";
+const au=new Audio();au.preload="auto";
+const recCache={};
+const S={rec:null,useRec:true,b:1,c:1,verses:[],cur:0,playing:false,token:0,rate:1.0,gap:"normal",voiceURI:"",size:22,sizeSet:false,title:true,auto:true,scroll:true};
 const keep=[];
 let wake=null;
 
-function load(){try{const s=JSON.parse(localStorage.getItem("krv-listen")||"{}");Object.assign(S,{b:s.b||1,c:s.c||1,cur:s.cur||0,rate:s.rate||0.9,gap:GAPS[s.gap]?s.gap:"normal",voiceURI:s.voiceURI||"",size:s.size||20,title:s.title!==false,auto:s.auto!==false,scroll:s.scroll!==false})}catch(e){}}
-function save(){try{localStorage.setItem("krv-listen",JSON.stringify({b:S.b,c:S.c,cur:S.cur,rate:S.rate,gap:S.gap,voiceURI:S.voiceURI,size:S.size,title:S.title,auto:S.auto,scroll:S.scroll}))}catch(e){}}
+function load(){try{const s=JSON.parse(localStorage.getItem("krv-listen")||"{}");Object.assign(S,{b:s.b||1,c:s.c||1,cur:s.cur||0,rate:s.rate||1.0,useRec:s.useRec!==false,gap:GAPS[s.gap]?s.gap:"normal",voiceURI:s.voiceURI||"",size:s.sizeSet&&s.size?s.size:22,sizeSet:!!s.sizeSet,title:s.title!==false,auto:s.auto!==false,scroll:s.scroll!==false})}catch(e){}}
+function save(){try{localStorage.setItem("krv-listen",JSON.stringify({useRec:S.useRec,b:S.b,c:S.c,cur:S.cur,rate:S.rate,gap:S.gap,voiceURI:S.voiceURI,size:S.size,sizeSet:S.sizeSet,title:S.title,auto:S.auto,scroll:S.scroll}))}catch(e){}}
 const unit=b=>b===19?"편":"장";
 const refText=(b,c)=>`${BOOKS[b-1][0]} ${c}${unit(b)}`;
 const pad=n=>String(n).padStart(2,"0");
@@ -251,6 +328,11 @@ async function getBook(b){
 function nextOf(b,c){if(c<BOOKS[b-1][1])return[b,c+1];if(b<66)return[b+1,1];return null}
 function prevOf(b,c){if(c>1)return[b,c-1];if(b>1)return[b-1,BOOKS[b-2][1]];return null}
 
+const pad3=n=>String(n).padStart(3,"0");
+const recUrl=(b,c,ext)=>`${AUDIO}/${pad(b)}/${pad3(c)}.${ext}`;
+async function getRec(b,c){const k=b+"-"+c;if(k in recCache)return recCache[k];
+  try{const r=await fetch(recUrl(b,c,"json"));recCache[k]=r.ok?(await r.json()).v:null}catch(e){return null}
+  return recCache[k]}
 async function go(b,c,{verse=0,play=false,fromHash=false}={}){
   stopSpeech();
   S.b=b;S.c=c;S.cur=verse;
@@ -269,11 +351,15 @@ async function go(b,c,{verse=0,play=false,fromHash=false}={}){
     ol.appendChild(li);
   });
   $("prevCh").disabled=!prevOf(b,c); $("nextCh").disabled=!nextOf(b,c);
+  S.rec=null; au.removeAttribute("src");
+  if(S.useRec){const tok=S.token;const r=await getRec(b,c);if(tok!==S.token)return;
+    if(r&&r.length===S.verses.length){S.rec=r;au.src=recUrl(b,c,"mp3");au.playbackRate=S.rate;}}
+  status(S.rec?"녹음된 낭독으로 들을 수 있습니다":"");
   const h=`#b${b}-c${c}`;
   if(!fromHash&&location.hash!==h){ignoreHash=h;location.hash=h;}
   if(!play){ window.scrollTo(0,0); mark(S.cur,S.cur>0); }
-  save();
-  if(play)speakFrom(verse,true);
+  save(); renderDone();
+  if(play)playFrom(verse,true);
 }
 
 function mark(i,scroll=true){
@@ -307,6 +393,28 @@ function utter(text,onend){
   synth.speak(u);
 }
 
+function playFrom(i,withTitle=false){
+  if(!S.rec)return speakFrom(i,withTitle);
+  S.token++; if(synth)synth.cancel();
+  S.playing=true; S.cur=i; setPlayIcon(); mark(i);
+  try{au.currentTime=(i===0&&withTitle)?0:Math.max(0,S.rec[i]-0.05)}catch(e){}
+  au.playbackRate=S.rate;
+  const p=au.play(); if(p&&p.catch)p.catch(()=>{S.playing=false;setPlayIcon();status("재생 버튼을 한 번 더 눌러 주세요")});
+  setMedia(); status(`${refText(S.b,S.c)} · 녹음된 낭독`);
+}
+function verseAt(t){const r=S.rec;let k=0;for(let j=0;j<r.length;j++){if(r[j]<=t+0.08)k=j;else break}return k}
+au.addEventListener("timeupdate",()=>{if(!S.rec||!S.playing)return;const k=verseAt(au.currentTime);if(k!==S.cur||!document.querySelector(".verse.now")){S.cur=k;mark(k);save();status(`${refText(S.b,S.c)} ${k+1}절 · 녹음된 낭독`)}});
+au.addEventListener("ended",()=>{if(!S.rec)return;markRead(S.b,S.c,"listen");const n=nextOf(S.b,S.c);if(S.auto&&n)go(n[0],n[1],{play:true});else{S.playing=false;setPlayIcon();S.cur=0;save();status("이 장을 다 읽었습니다")}});
+au.addEventListener("error",()=>{if(!S.rec||!au.getAttribute("src"))return;const wasPlaying=S.playing;S.rec=null;status("녹음을 불러오지 못해 기기 목소리로 읽습니다");if(wasPlaying)speakFrom(S.cur)});
+au.addEventListener("pause",()=>{if(S.rec&&S.playing&&!au.ended){S.playing=false;setPlayIcon();status(`${refText(S.b,S.c)} ${S.cur+1}절에서 멈췄습니다`)}});
+au.addEventListener("play",()=>{if(S.rec&&!S.playing){S.playing=true;setPlayIcon()}});
+function setMedia(){if(!("mediaSession" in navigator))return;try{
+  navigator.mediaSession.metadata=new MediaMetadata({title:refText(S.b,S.c),artist:"개역한글 성경",album:"성경 듣기",artwork:[{src:"icon-512.png",sizes:"512x512",type:"image/png"}]});
+  navigator.mediaSession.setActionHandler("play",()=>playFrom(S.cur));
+  navigator.mediaSession.setActionHandler("pause",()=>pause());
+  navigator.mediaSession.setActionHandler("previoustrack",()=>{const p=prevOf(S.b,S.c);if(p)go(p[0],p[1],{play:true})});
+  navigator.mediaSession.setActionHandler("nexttrack",()=>{const n=nextOf(S.b,S.c);if(n)go(n[0],n[1],{play:true})});
+}catch(e){}}
 function speakFrom(i,withTitle=false){
   if(!synth){status("이 브라우저는 소리 내어 읽기를 지원하지 않습니다. 크롬이나 사파리에서 열어 주세요.");return}
   S.token++; synth.cancel();
@@ -322,6 +430,7 @@ function speakFrom(i,withTitle=false){
 }
 function speakVerse(i){
   if(i>=S.verses.length){
+    markRead(S.b,S.c,"listen");
     const n=nextOf(S.b,S.c);
     if(S.auto&&n){go(n[0],n[1],{play:true});}
     else{stopSpeech();S.cur=0;save();status("이 장을 다 읽었습니다");}
@@ -336,7 +445,7 @@ function speakVerse(i){
 }
 function later(fn,ms){const t=S.token;setTimeout(()=>{if(t===S.token&&S.playing)fn()},ms)}
 function stopSpeech(){
-  S.token++; if(synth)synth.cancel();
+  S.token++; if(synth)synth.cancel(); try{au.pause()}catch(e){}
   S.playing=false; setPlayIcon(); releaseWake();
 }
 function pause(){ stopSpeech(); status(`${refText(S.b,S.c)} ${S.cur+1}절에서 멈췄습니다`); }
@@ -354,7 +463,7 @@ function applySize(){document.documentElement.style.setProperty("--verse-size",S
 const fmtRate=r=>r.toFixed(Math.round(r*100)%10?2:1)+"×";
 function rateLabel(){renderSpeedBar()}
 function renderSpeedBar(){const bar=$("speedBar");bar.innerHTML="";RATES.forEach(r=>{const b=document.createElement("button");b.innerHTML=r.toFixed(Math.round(r*100)%10?2:1)+(r===0.7?"<small>느리게</small>":r===1.0?"<small>보통</small>":r===1.5?"<small>빠르게</small>":"");b.setAttribute("aria-label",`${fmtRate(r)} 속도`);b.setAttribute("aria-pressed",r===S.rate);if(r===S.rate)b.className="on";b.onclick=()=>setRate(r);bar.appendChild(b)})}
-function setRate(r){S.rate=r;renderSpeedBar();save();status(`읽기 속도 ${fmtRate(r)}`);if(S.playing)speakFrom(S.cur)}
+function setRate(r){S.rate=r;au.playbackRate=r;renderSpeedBar();save();status(`읽기 속도 ${fmtRate(r)}`);if(S.playing&&!S.rec)speakFrom(S.cur)}
 
 /* picker */
 function openPicker(){
@@ -365,7 +474,7 @@ function openPicker(){
 }
 function showChapters(b){
   const g=$("chGrid");g.innerHTML="";
-  for(let c=1;c<=BOOKS[b-1][1];c++){const btn=document.createElement("button");btn.textContent=c;btn.setAttribute("aria-label",refText(b,c));if(b===S.b&&c===S.c)btn.className="on";btn.onclick=()=>{closeSheet("picker");go(b,c)};g.appendChild(btn)}
+  for(let c=1;c<=BOOKS[b-1][1];c++){const btn=document.createElement("button");btn.textContent=c;btn.setAttribute("aria-label",refText(b,c)+(H.ch[ckey(b,c)]?" 읽음":""));if(H.ch[ckey(b,c)])btn.classList.add("read");if(b===S.b&&c===S.c)btn.className="on";btn.onclick=()=>{closeSheet("picker");go(b,c)};g.appendChild(btn)}
   $("bookList").hidden=true;$("chList").hidden=false;$("pickBack").hidden=false;
   $("pickTitle").textContent=`${BOOKS[b-1][0]} · ${unit(b)} 선택`;
   $("picker").scrollTop=0;
@@ -391,25 +500,26 @@ function renderVoices(){
   vs.forEach(v=>{const o=document.createElement("option");o.value=v.voiceURI;o.textContent=v.name.replace(/Microsoft |Google /,"")+(v.localService?"":" (온라인)");if(cur&&v.voiceURI===cur.voiceURI)o.selected=true;sel.appendChild(o)});
 }
 $("voiceSel").onchange=e=>{S.voiceURI=e.target.value;save();if(S.playing)speakFrom(S.cur)};
+$("optRec").onchange=()=>{S.useRec=$("optRec").checked;save();go(S.b,S.c,{verse:S.cur,fromHash:true})};
 ["Title","Auto","Scroll"].forEach(k=>{const el=$("opt"+k);el.onchange=()=>{S[k.toLowerCase()]=el.checked;save()}});
 
 /* wiring */
 $("refBtn").onclick=openPicker;
 $("pickClose").onclick=()=>closeSheet("picker");
 $("pickBack").onclick=()=>{$("bookList").hidden=false;$("chList").hidden=true;$("pickBack").hidden=true;$("pickTitle").textContent="성경 선택"};
-$("setBtn").onclick=()=>{refreshOff();renderVoices();renderRates();$("optTitle").checked=S.title;$("optAuto").checked=S.auto;$("optScroll").checked=S.scroll;openSheet("settings")};
+$("setBtn").onclick=()=>{refreshOff();renderVoices();renderRates();$("optRec").checked=S.useRec;$("optTitle").checked=S.title;$("optAuto").checked=S.auto;$("optScroll").checked=S.scroll;openSheet("settings")};
 $("setClose").onclick=()=>closeSheet("settings");
-$("playBtn").onclick=()=>{if(S.playing)pause();else speakFrom(S.cur,S.cur===0)};
-$("prevV").onclick=()=>{const i=Math.max(0,S.cur-1);if(S.playing)speakFrom(i);else{S.cur=i;mark(i);save()}};
-$("nextV").onclick=()=>{const i=Math.min(S.verses.length-1,S.cur+1);if(S.playing)speakFrom(i);else{S.cur=i;mark(i);save()}};
+$("playBtn").onclick=()=>{if(S.playing)pause();else playFrom(S.cur,S.cur===0)};
+$("prevV").onclick=()=>{const i=Math.max(0,S.cur-1);if(S.playing)playFrom(i);else{S.cur=i;mark(i);save()}};
+$("nextV").onclick=()=>{const i=Math.min(S.verses.length-1,S.cur+1);if(S.playing)playFrom(i);else{S.cur=i;mark(i);save()}};
 $("listBtn").onclick=openPicker;
 $("prevCh").onclick=()=>{const p=prevOf(S.b,S.c);if(p)go(p[0],p[1],{play:S.playing})};
 $("nextCh").onclick=()=>{const n=nextOf(S.b,S.c);if(n)go(n[0],n[1],{play:S.playing})};
-$("smaller").onclick=()=>{S.size=Math.max(15,S.size-2);applySize();save()};
-$("bigger").onclick=()=>{S.size=Math.min(34,S.size+2);applySize();save()};
-$("verses").addEventListener("click",e=>{const li=e.target.closest(".verse");if(li)speakFrom(+li.dataset.i)});
-$("verses").addEventListener("keydown",e=>{if((e.key==="Enter"||e.key===" ")&&e.target.classList.contains("verse")){e.preventDefault();speakFrom(+e.target.dataset.i)}});
-document.addEventListener("keydown",e=>{if(e.key==="Escape"){if(!$("picker").hidden)closeSheet("picker");else if(!$("settings").hidden)closeSheet("settings")}});
+$("smaller").onclick=()=>{S.sizeSet=true;S.size=Math.max(15,S.size-2);applySize();save()};
+$("bigger").onclick=()=>{S.sizeSet=true;S.size=Math.min(34,S.size+2);applySize();save()};
+$("verses").addEventListener("click",e=>{const li=e.target.closest(".verse");if(li)playFrom(+li.dataset.i)});
+$("verses").addEventListener("keydown",e=>{if((e.key==="Enter"||e.key===" ")&&e.target.classList.contains("verse")){e.preventDefault();playFrom(+e.target.dataset.i)}});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"){if(!$("history").hidden)closeSheet("history");else if(!$("picker").hidden)closeSheet("picker");else if(!$("settings").hidden)closeSheet("settings")}});
 if(synth&&"onvoiceschanged" in synth)synth.onvoiceschanged=()=>{if(!$("settings").hidden)renderVoices()};
 
 
@@ -424,11 +534,90 @@ $("offBtn").onclick=async()=>{
 };
 if(hasSW){window.addEventListener("load",()=>{navigator.serviceWorker.register("sw.js").catch(()=>{})})}
 
+/* reading history */
+const HKEY="krv-history";
+let H={ch:{},days:{},log:[]};
+function hload(){try{const x=JSON.parse(localStorage.getItem(HKEY)||"null");if(x&&x.ch)H={ch:x.ch||{},days:x.days||{},log:x.log||[]}}catch(e){}}
+function hsave(){try{localStorage.setItem(HKEY,JSON.stringify(H))}catch(e){}}
+const dkey=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const today=()=>dkey(new Date());
+function dayRec(k=today()){return H.days[k]||(H.days[k]={sec:0,ch:[]})}
+const ckey=(b,c)=>b+"-"+c;
+function markRead(b,c,how){
+  const k=ckey(b,c),t=today(),e=H.ch[k]||(H.ch[k]={n:0,last:""});
+  if(how==="listen"&&H.log[0]&&H.log[0].k===k&&H.log[0].d===t)return;
+  e.n++;e.last=t;const d=dayRec();if(!d.ch.includes(k))d.ch.push(k);
+  const now=new Date();H.log.unshift({k,d:t,t:`${pad(now.getHours())}:${pad(now.getMinutes())}`,how});H.log=H.log.slice(0,300);
+  hsave();renderDone();
+}
+function unmarkToday(b,c){
+  const k=ckey(b,c),t=today(),e=H.ch[k];if(!e)return;
+  const i=H.log.findIndex(x=>x.k===k&&x.d===t);if(i>=0)H.log.splice(i,1);
+  e.n--;if(e.n<=0)delete H.ch[k];else{const prev=H.log.find(x=>x.k===k);e.last=prev?prev.d:e.last}
+  const d=dayRec();d.ch=d.ch.filter(x=>x!==k);hsave();renderDone();
+}
+function readToday(b,c){const e=H.ch[ckey(b,c)];return !!(e&&e.last===today())}
+function renderDone(){
+  const btn=$("doneBtn");if(!btn)return;const e=H.ch[ckey(S.b,S.c)];
+  if(readToday(S.b,S.c)){btn.classList.add("on");btn.textContent=`오늘 읽음 ✓${e.n>1?` (${e.n}번째)`:""} · 다시 누르면 취소`}
+  else{btn.classList.remove("on");btn.textContent=e?`이 장을 읽었어요 (지난번 ${e.last.slice(5).replace("-","/")})`:"이 장을 읽었어요"}
+}
+$("doneBtn").onclick=()=>{if(readToday(S.b,S.c))unmarkToday(S.b,S.c);else markRead(S.b,S.c,"manual")};
+setInterval(()=>{if(S.playing){dayRec().sec+=5;hsave()}},5000);
+
+const OT=BOOKS.slice(0,39).reduce((a,x)=>a+x[1],0),NT=BOOKS.slice(39).reduce((a,x)=>a+x[1],0);
+function active(k){const d=H.days[k];return !!(d&&(d.ch.length||d.sec>=60))}
+function streak(){let d=new Date();if(!active(dkey(d)))d.setDate(d.getDate()-1);let n=0;while(active(dkey(d))){n++;d.setDate(d.getDate()-1)}return n}
+function renderHistory(){
+  const keys=Object.keys(H.ch),total=OT+NT;
+  const ot=keys.filter(k=>+k.split("-")[0]<=39).length,nt=keys.length-ot;
+  let week=0;const days=[];const wd="일월화수목금토";
+  for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const r=H.days[dkey(d)];week+=r?r.ch.length:0;days.push({lab:i===0?"오늘":wd[d.getDay()],min:r?Math.round(r.sec/60):0,today:i===0})}
+  const pct=keys.length/total*100;
+  $("stats").innerHTML=`<div class="stat"><b>${pct<10&&pct>0?pct.toFixed(1):Math.round(pct)}<small>%</small></b><span>성경 전체 진도</span></div>
+   <div class="stat"><b>${keys.length}<small>장</small></b><span>읽은 장 / 1,189장</span></div>
+   <div class="stat"><b>${streak()}<small>일</small></b><span>연속으로 읽은 날</span></div>
+   <div class="stat"><b>${week}<small>장</small></b><span>최근 7일 읽은 장</span></div>`;
+  const max=Math.max(10,...days.map(x=>x.min));
+  $("week").innerHTML=days.map(x=>`<div class="${x.today?"today":""}"><span>${x.min}</span><i class="${x.min?"":"zero"}" style="height:${Math.max(3,x.min/max*80)}px"></i><span>${x.lab}</span></div>`).join("");
+  const w=(a,b)=>a?Math.max(2,a/b*100)+"%":"0";$("otBar").style.width=w(ot,OT);$("ntBar").style.width=w(nt,NT);
+  $("otTxt").textContent=`${ot} / ${OT}장`;$("ntTxt").textContent=`${nt} / ${NT}장`;
+  const rc=$("recent");rc.innerHTML="";
+  if(!H.log.length)rc.innerHTML='<li class="empty">아직 기록이 없습니다. 한 장을 끝까지 들으면 자동으로 기록됩니다.</li>';
+  H.log.slice(0,15).forEach(x=>{const [b,c]=x.k.split("-").map(Number);const li=document.createElement("li");const bt=document.createElement("button");
+    bt.innerHTML=`<span>${refText(b,c)}<span class="how">${x.how==="listen"?"들음":"읽음"}</span></span><span class="when">${x.d.slice(5).replace("-","/")} ${x.t}</span>`;
+    bt.onclick=()=>{closeSheet("history");go(b,c)};li.appendChild(bt);rc.appendChild(li)});
+  const bp=$("bookProg");bp.innerHTML="";
+  BOOKS.forEach(([name,n],i)=>{const b=i+1;let r=0;for(let c=1;c<=n;c++)if(H.ch[ckey(b,c)])r++;
+    const bt=document.createElement("button");bt.innerHTML=`<span>${name}</span><span class="pbar"><i style="width:${r?Math.max(4,r/n*100):0}%"></i></span><span class="n">${r}/${n}</span>`;
+    bt.setAttribute("aria-label",`${name} ${n}장 중 ${r}장 읽음`);bt.onclick=()=>showHistBook(b);bp.appendChild(bt)});
+}
+function showHistBook(b){
+  const g=$("histChGrid");g.innerHTML="";
+  for(let c=1;c<=BOOKS[b-1][1];c++){const bt=document.createElement("button");bt.textContent=c;const e=H.ch[ckey(b,c)];
+    if(e){bt.className="read";bt.title=`${e.n}번 · 마지막 ${e.last}`}bt.setAttribute("aria-label",`${refText(b,c)}${e?" 읽음":""}`);
+    bt.onclick=()=>{closeSheet("history");go(b,c)};g.appendChild(bt)}
+  $("histMain").hidden=true;$("histBook").hidden=false;$("histBack").hidden=false;$("histTitle").textContent=`${BOOKS[b-1][0]} 읽은 기록`;$("history").scrollTop=0;
+}
+function histHome(){$("histMain").hidden=false;$("histBook").hidden=true;$("histBack").hidden=true;$("histTitle").textContent="읽은 기록"}
+$("histBtn").onclick=()=>{renderHistory();histHome();openSheet("history")};
+$("histClose").onclick=()=>closeSheet("history");
+$("histBack").onclick=histHome;
+$("expBtn").onclick=async()=>{const txt=JSON.stringify(H);try{await navigator.clipboard.writeText(txt);$("bakMsg").textContent="기록을 복사했습니다. 메모장이나 카카오톡 나에게 보내기에 붙여넣어 보관하세요."}
+  catch(e){const t=$("impText");t.hidden=false;t.value=txt;t.select();$("bakMsg").textContent="아래 글을 길게 눌러 모두 복사해 보관하세요."}};
+$("impBtn").onclick=()=>{const t=$("impText");t.hidden=false;t.value="";$("impRow").hidden=false;t.focus();$("bakMsg").textContent="복사해 둔 기록을 붙여넣고 [불러오기]를 누르세요. 지금 기록과 합쳐집니다."};
+$("impGo").onclick=()=>{try{const x=JSON.parse($("impText").value);if(!x||!x.ch)throw 0;
+  for(const [k,e] of Object.entries(x.ch)){const m=H.ch[k];if(!m||m.n<e.n)H.ch[k]={n:Math.max(e.n,m?m.n:0),last:(m&&m.last>e.last)?m.last:e.last}}
+  for(const [k,d] of Object.entries(x.days||{})){const m=dayRec(k);m.sec=Math.max(m.sec,d.sec||0);(d.ch||[]).forEach(c=>{if(!m.ch.includes(c))m.ch.push(c)})}
+  const seen=new Set(H.log.map(l=>l.k+l.d+l.t));(x.log||[]).forEach(l=>{if(!seen.has(l.k+l.d+l.t))H.log.push(l)});H.log.sort((a,b)=>(b.d+b.t).localeCompare(a.d+a.t));H.log=H.log.slice(0,300);
+  hsave();renderHistory();renderDone();$("impText").hidden=true;$("impRow").hidden=true;$("bakMsg").textContent="기록을 불러왔습니다."}
+  catch(e){$("bakMsg").textContent="기록을 읽지 못했습니다. 복사해 둔 글 전체를 그대로 붙여넣었는지 확인해 주세요."}};
+
 let ignoreHash=null;
 function parseHash(){const m=/^#b(\d+)-c(\d+)$/.exec(location.hash);if(!m)return null;const b=+m[1],c=+m[2];if(b<1||b>66||c<1||c>BOOKS[b-1][1])return null;return[b,c]}
 window.addEventListener("hashchange",()=>{if(location.hash===ignoreHash){ignoreHash=null;return}const p=parseHash();if(p&&(p[0]!==S.b||p[1]!==S.c))go(p[0],p[1],{fromHash:true})});
 
-load(); applySize(); rateLabel();
+load(); hload(); applySize(); rateLabel();
 const h=parseHash();
 if(h&&(h[0]!==S.b||h[1]!==S.c)) go(h[0],h[1],{fromHash:true});
 else go(S.b,S.c,{verse:S.cur,fromHash:!!h});
